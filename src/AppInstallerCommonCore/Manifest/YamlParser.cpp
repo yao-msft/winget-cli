@@ -4,6 +4,7 @@
 #include "AppInstallerSHA256.h"
 #include "winget/Yaml.h"
 #include "winget/ManifestYamlParser.h"
+#include <json.h>
 
 namespace AppInstaller::Manifest
 {
@@ -45,6 +46,44 @@ namespace AppInstaller::Manifest
             }
 
             return result;
+        }
+
+        Json::Value ConvertToJson(const YAML::Node& rootNode)
+        {
+            Json::Value result;
+
+            switch (rootNode.GetType())
+            {
+            case YAML::Node::Type::Mapping:
+                for (auto const& keyValuePair : rootNode.Mapping())
+                {
+                    result[keyValuePair.first.as<std::string>()] = ConvertToJson(keyValuePair.second);
+                }
+                break;
+            case YAML::Node::Type::Sequence:
+                for (auto const value : rootNode.Sequence())
+                {
+                    result.append(ConvertToJson(value));
+                }
+                break;
+            case YAML::Node::Type::Scalar:
+                result = Json::Value(rootNode.as<std::string>());
+                break;
+            case YAML::Node::Type::None:
+                result = Json::Value::nullSingleton();
+                break;
+            default:
+                THROW_HR(E_UNEXPECTED);
+            }
+
+            return result;
+        }
+
+        void ValidateAgainstSchema(const YAML::Node& rootNode)
+        {
+            UNREFERENCED_PARAMETER(rootNode);
+
+            auto json = ConvertToJson(rootNode);
         }
     }
 
@@ -219,6 +258,8 @@ namespace AppInstaller::Manifest
         {
             THROW_EXCEPTION_MSG(ManifestException(APPINSTALLER_CLI_ERROR_UNSUPPORTED_MANIFESTVERSION), "Unsupported ManifestVersion: %S", manifest.ManifestVersion.ToString().c_str());
         }
+
+        ValidateAgainstSchema(rootNode);
 
         PrepareManifestFieldInfos(manifest.ManifestVersion);
 

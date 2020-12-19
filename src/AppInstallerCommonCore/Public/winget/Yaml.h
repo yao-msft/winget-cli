@@ -97,6 +97,7 @@ namespace AppInstaller::YAML
         bool IsScalar() const { return m_type == Type::Scalar; }
         bool IsSequence() const { return m_type == Type::Sequence; }
         bool IsMap() const { return m_type == Type::Mapping; }
+        Type GetType() const { return m_type; }
 
         explicit operator bool() const { return IsDefined(); }
 
