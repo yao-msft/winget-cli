@@ -1203,7 +1203,7 @@ public:
 
         throwRuntimeError("Unrecognised JSON type name '" +
                 std::string(typeName.c_str()) + "'");
-        abort();
+        //abort();
     }
 
 private:

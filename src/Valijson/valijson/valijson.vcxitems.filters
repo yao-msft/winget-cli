@@ -1,0 +1,34 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="valijson">
+      <UniqueIdentifier>{d2cad677-365c-4fae-94d0-01c3ed4cb3d3}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="$(MSBuildThisFileDirectory)include\valijson\validator.hpp">
+      <Filter>valijson</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)include\valijson\validation_visitor.hpp">
+      <Filter>valijson</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)include\valijson\validation_results.hpp">
+      <Filter>valijson</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)include\valijson\subschema.hpp">
+      <Filter>valijson</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)include\valijson\schema_parser.hpp">
+      <Filter>valijson</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)include\valijson\schema.hpp">
+      <Filter>valijson</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)include\valijson\exceptions.hpp">
+      <Filter>valijson</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)include\valijson\constraint_builder.hpp">
+      <Filter>valijson</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>

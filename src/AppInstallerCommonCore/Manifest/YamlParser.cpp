@@ -5,6 +5,11 @@
 #include "winget/Yaml.h"
 #include "winget/ManifestYamlParser.h"
 #include <json.h>
+#include <valijson/schema.hpp>
+#include <valijson/schema_parser.hpp>
+#include <valijson/validator.hpp>
+#include <valijson/adapters/jsoncpp_adapter.hpp>
+#include <valijson/utils/jsoncpp_utils.hpp>
 
 namespace AppInstaller::Manifest
 {
@@ -81,9 +86,49 @@ namespace AppInstaller::Manifest
 
         void ValidateAgainstSchema(const YAML::Node& rootNode)
         {
+            using valijson::Schema;
+            using valijson::SchemaParser;
+            using valijson::Validator;
+            using valijson::adapters::JsonCppAdapter;
+
             UNREFERENCED_PARAMETER(rootNode);
 
             auto json = ConvertToJson(rootNode);
+
+            Json::Value schema;
+            if (!valijson::utils::loadDocument("mySchema.json", schema)) {
+                throw std::runtime_error("Failed to load schema document");
+            }
+
+            Schema mySchema;
+            SchemaParser parser;
+            JsonCppAdapter mySchemaAdapter(schema);
+            parser.populateSchema(mySchemaAdapter, mySchema);
+
+            Validator validator;
+            JsonCppAdapter myTargetAdapter(json);
+            valijson::ValidationResults results;
+            if (!validator.validate(mySchema, myTargetAdapter, &results)) {
+                valijson::ValidationResults::Error error;
+                unsigned int errorNum = 1;
+                std::stringstream ss;
+                while (results.popError(error)) {
+                    std::string context;
+                    for (auto itr = error.context.begin(); itr != error.context.end(); itr++) {
+                        context += *itr;
+                    }
+
+                    ss << "Error #" << errorNum << std::endl
+                        << "  context: " << context << std::endl
+                        << "  desc:    " << error.description << std::endl;
+                    ++errorNum;
+                }
+
+
+
+
+                throw std::runtime_error("Validation failed. Reason:" + ss.str());
+            }
         }
     }
 

@@ -16,6 +16,8 @@
 #define YAML_DECLARE_STATIC
 #include <yaml.h>
 
+#define VALIJSON_USE_EXCEPTIONS 1
+
 #include <algorithm>
 #include <chrono>
 #include <cwctype>
