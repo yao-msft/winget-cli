@@ -10,6 +10,7 @@
 #include <valijson/validator.hpp>
 #include <valijson/adapters/jsoncpp_adapter.hpp>
 #include <valijson/utils/jsoncpp_utils.hpp>
+#include <ManifestSchema.h>
 
 namespace AppInstaller::Manifest
 {
@@ -96,9 +97,38 @@ namespace AppInstaller::Manifest
             auto json = ConvertToJson(rootNode);
 
             Json::Value schema;
-            if (!valijson::utils::loadDocument("mySchema.json", schema)) {
-                throw std::runtime_error("Failed to load schema document");
-            }
+            //if (!valijson::utils::loadDocument("mySchema.json", schema)) {
+            //    throw std::runtime_error("Failed to load schema document");
+            //}
+
+
+            HMODULE module = GetModuleHandle(NULL);
+
+                HRSRC resourceInfoHandle = FindResource(module, MAKEINTRESOURCE(IDX_MANIFEST_SCHEMA_V1), MAKEINTRESOURCE(JSON_RESOURCE_TYPE));
+                THROW_LAST_ERROR_IF_NULL(resourceInfoHandle);
+
+                HGLOBAL resourceMemoryHandle = LoadResource(module, resourceInfoHandle);
+                THROW_LAST_ERROR_IF_NULL(resourceMemoryHandle);
+
+                ULONG size = 0;
+                char* resource = NULL;
+                size = SizeofResource(NULL, resourceInfoHandle);
+                THROW_LAST_ERROR_IF(size == 0);
+
+                resource = reinterpret_cast<char*>(LockResource(resourceMemoryHandle));
+                THROW_HR_IF_NULL(E_UNEXPECTED, resource);
+
+                std::string schemastr;
+                schemastr.assign(resource, size);
+
+                const auto fileLength = static_cast<int>(schemastr.length());
+                Json::CharReaderBuilder builder;
+                const std::unique_ptr<Json::CharReader> reader(builder.newCharReader());
+                std::string err;
+                if (!reader->parse(schemastr.c_str(), schemastr.c_str() + fileLength, &schema, &err)) {
+                    std::cerr << "Jsoncpp parser failed to parse the document:" << std::endl << err;
+                }
+
 
             Schema mySchema;
             SchemaParser parser;
