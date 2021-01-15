@@ -58,27 +58,30 @@ namespace AppInstaller::Manifest
         {
             Json::Value result;
 
-            switch (rootNode.GetType())
+            if (rootNode.IsNull())
             {
-            case YAML::Node::Type::Mapping:
+                result = Json::Value::nullSingleton();
+            }
+            else if (rootNode.IsMap())
+            {
                 for (auto const& keyValuePair : rootNode.Mapping())
                 {
                     result[keyValuePair.first.as<std::string>()] = ConvertToJson(keyValuePair.second);
                 }
-                break;
-            case YAML::Node::Type::Sequence:
+            }
+            else if (rootNode.IsSequence())
+            {
                 for (auto const value : rootNode.Sequence())
                 {
                     result.append(ConvertToJson(value));
                 }
-                break;
-            case YAML::Node::Type::Scalar:
+            }
+            else if (rootNode.IsScalar())
+            {
                 result = Json::Value(rootNode.as<std::string>());
-                break;
-            case YAML::Node::Type::None:
-                result = Json::Value::nullSingleton();
-                break;
-            default:
+            }
+            else
+            {
                 THROW_HR(E_UNEXPECTED);
             }
 
