@@ -3,7 +3,7 @@
 #include "pch.h"
 #include "Rest/Schema/1_0/Interface.h"
 #include "Rest/Schema/IRestClient.h"
-#include "Rest/Schema/HttpClientHelper.h"
+#include "Rest/HttpClientHelper.h"
 #include "ManifestDeserializer.h"
 #include "Rest/Schema/JsonHelper.h"
 #include "Rest/Schema/CommonRestConstants.h"
