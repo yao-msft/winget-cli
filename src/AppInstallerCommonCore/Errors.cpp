@@ -143,6 +143,10 @@ namespace AppInstaller
                 return "The source data is corrupted or tampered";
             case APPINSTALLER_CLI_ERROR_STREAM_READ_FAILURE:
                 return "Error reading from the stream";
+            case APPINSTALLER_CLI_ERROR_UNSUPPORTED_SEARCH_QUERY:
+                return "The search request is not supported by one or more sources";
+            case APPINSTALLER_CLI_ERROR_RESTSOURCE_ENDPOINT_NOT_FOUND:
+                return "The rest source endpoint is not found.";
             default:
                 return "Unknown Error Code";
             }
