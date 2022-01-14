@@ -126,8 +126,9 @@ namespace winrt::AppInstallerCaller::implementation
         // Passing PackageInstallScope::User causes the install to fail if there's no installer that supports that.
         installOptions.PackageInstallScope(PackageInstallScope::Any);
         installOptions.PackageInstallMode(PackageInstallMode::Silent);
+        installOptions.AllowUpgradeToUnknownVersion(true);
 
-        return packageManager.InstallPackageAsync(package, installOptions);
+        return packageManager.UpgradePackageAsync(package, installOptions);
     }
 
     IAsyncAction UpdateUIProgress(
@@ -231,7 +232,11 @@ namespace winrt::AppInstallerCaller::implementation
         else
         {
             installButton.Content(box_value(L"Install"));
-            statusText.Text(L"Install failed.");
+            std::wstring outstr = L"Install failed. Status: ";
+            outstr += std::to_wstring((int)(installResult.Status()));
+            outstr += L" HR: ";
+            outstr += std::to_wstring((int)(installResult.ExtendedErrorCode()));
+            statusText.Text(outstr);
         }
     }
 
@@ -393,7 +398,11 @@ namespace winrt::AppInstallerCaller::implementation
 
         // Get the remote catalog
         PackageCatalogReference selectedRemoteCatalogRef = m_packageCatalogs.GetAt(selectedIndex);
-        ConnectResult remoteConnectResult{ co_await selectedRemoteCatalogRef.ConnectAsync() };
+        CreateCompositePackageCatalogOptions createCompositePackageCatalogOptions = CreateCreateCompositePackageCatalogOptions();
+        createCompositePackageCatalogOptions.Catalogs().Append(selectedRemoteCatalogRef);
+        PackageManager packageManager = CreatePackageManager();
+        PackageCatalogReference catalogRef{ packageManager.CreateCompositePackageCatalog(createCompositePackageCatalogOptions) };
+        ConnectResult remoteConnectResult{ co_await catalogRef.ConnectAsync() };
         PackageCatalog selectedRemoteCatalog = remoteConnectResult.PackageCatalog();
         if (!selectedRemoteCatalog)
         {
@@ -453,7 +462,7 @@ namespace winrt::AppInstallerCaller::implementation
             if (installedVersion != nullptr)
             {
                 co_await winrt::resume_foreground(installButton.Dispatcher());
-                installButton.IsEnabled(false);
+                installButton.IsEnabled(true);
                 statusText.Text(L"Already installed. Product code: " + installedVersion.ProductCodes().GetAt(0));
             }
             else
