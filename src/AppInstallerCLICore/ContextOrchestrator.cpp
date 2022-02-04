@@ -12,6 +12,8 @@ namespace AppInstaller::CLI::Execution
 {
     namespace
     {
+        constexpr static std::string_view OperationCommandQueueName = "operation"sv;
+
         // Callback function used by worker threads in the queue.
         // context must be a pointer to a queue item.
         void CALLBACK OrchestratorQueueWorkCallback(PTP_CALLBACK_INSTANCE, PVOID context, PTP_WORK)
@@ -22,6 +24,16 @@ namespace AppInstaller::CLI::Execution
             {
                 queue->RunItem(queueItem->GetId());
             }
+        }
+
+        std::string_view GetCommandQueueName(std::string_view commandName)
+        {
+            if (commandName == "install" || commandName == "uninstall")
+            {
+                return OperationCommandQueueName;
+            }
+
+            return commandName;
         }
     }
 
@@ -43,11 +55,11 @@ namespace AppInstaller::CLI::Execution
         // use that as the maximum (up to 3); otherwise use a single thread.
         const auto supportedConcurrentThreads = std::thread::hardware_concurrency();
         const UINT32 maxDownloadThreads = 3;
-        const UINT32 installThreads = 1;
+        const UINT32 operationThreads = 1;
         const UINT32 downloadThreads = std::min(supportedConcurrentThreads ? supportedConcurrentThreads - 1 : 1, maxDownloadThreads);
 
         AddCommandQueue(COMDownloadCommand::CommandName, downloadThreads);
-        AddCommandQueue(COMInstallCommand::CommandName, installThreads);
+        AddCommandQueue(OperationCommandQueueName, operationThreads);
     }
 
     void ContextOrchestrator::AddCommandQueue(std::string_view commandName, UINT32 allowedThreads)
@@ -73,13 +85,16 @@ namespace AppInstaller::CLI::Execution
     void ContextOrchestrator::EnqueueAndRunItem(std::shared_ptr<OrchestratorQueueItem> item)
     {
         std::lock_guard<std::mutex> lockQueue{ m_queueLock };
-
+        AICLI_LOG(Core, Info, << "Called insideddd here");
         if (item->IsOnFirstCommand())
         {
             THROW_HR_IF(HRESULT_FROM_WIN32(ERROR_INSTALL_ALREADY_RUNNING), FindById(item->GetId()));
         }
-
-        m_commandQueues.at(std::string(item->GetNextCommand().Name()))->EnqueueAndRunItem(item);
+        AICLI_LOG(Core, Info, << "Called insideddd here 2");
+        std::string name{ GetCommandQueueName(item->GetNextCommand().Name()) };
+        AICLI_LOG(Core, Info, << "Called insideddd here 3" << name << "queue size: " << m_commandQueues.size());
+        m_commandQueues.at(name)->EnqueueAndRunItem(item);
+        AICLI_LOG(Core, Info, << "Called insideddd here 4");
     }
 
     void ContextOrchestrator::RemoveItemInState(const OrchestratorQueueItem& item, OrchestratorQueueItemState state)
@@ -111,14 +126,20 @@ namespace AppInstaller::CLI::Execution
 
     void ContextOrchestrator::AddItemManifestToInstallingSource(const OrchestratorQueueItem& queueItem)
     {
-        const auto& manifest = queueItem.GetContext().Get<Execution::Data::Manifest>();
-        m_installingWriteableSource.AddPackageVersion(manifest, std::filesystem::path{ manifest.Id + '.' + manifest.Version });
+        if (queueItem.IsApplicableForInstallingSource())
+        {
+            const auto& manifest = queueItem.GetContext().Get<Execution::Data::Manifest>();
+            m_installingWriteableSource.AddPackageVersion(manifest, std::filesystem::path{ manifest.Id + '.' + manifest.Version });
+        }
     }
 
     void ContextOrchestrator::RemoveItemManifestFromInstallingSource(const OrchestratorQueueItem& queueItem)
     {
-        const auto& manifest = queueItem.GetContext().Get<Execution::Data::Manifest>();
-        m_installingWriteableSource.RemovePackageVersion(manifest, std::filesystem::path{ manifest.Id + '.' + manifest.Version });
+        if (queueItem.IsApplicableForInstallingSource())
+        {
+            const auto& manifest = queueItem.GetContext().Get<Execution::Data::Manifest>();
+            m_installingWriteableSource.RemovePackageVersion(manifest, std::filesystem::path{ manifest.Id + '.' + manifest.Version });
+        }
     }
 
     _Requires_lock_held_(m_queueLock)
@@ -181,11 +202,15 @@ namespace AppInstaller::CLI::Execution
 
     void OrchestratorQueue::EnqueueAndRunItem(std::shared_ptr<OrchestratorQueueItem> item)
     {
+        AICLI_LOG(Core, Info, << "Called inside here");
         EnqueueItem(item);
+
+        AICLI_LOG(Core, Info, << "Called inside here 2");
 
         item->SetCurrentQueue(this);
         auto work = CreateThreadpoolWork(OrchestratorQueueWorkCallback, item.get(), &m_threadPoolCallbackEnviron);
         SubmitThreadpoolWork(work);
+        AICLI_LOG(Core, Info, << "Called inside here 3");
     }
 
     void OrchestratorQueue::RunItem(const OrchestratorQueueItemId& itemId)
@@ -315,7 +340,7 @@ namespace AppInstaller::CLI::Execution
 
     std::unique_ptr<OrchestratorQueueItem> OrchestratorQueueItemFactory::CreateItemForInstall(std::wstring packageId, std::wstring sourceId, std::unique_ptr<COMContext> context)
     {
-        std::unique_ptr<OrchestratorQueueItem> item = std::make_unique<OrchestratorQueueItem>(OrchestratorQueueItemId(std::move(packageId), std::move(sourceId)), std::move(context));
+        std::unique_ptr<OrchestratorQueueItem> item = std::make_unique<OrchestratorQueueItem>(OrchestratorQueueItemId(std::move(packageId), std::move(sourceId)), std::move(context), true /* isApplicableForInstallingSource */);
         item->AddCommand(std::make_unique<::AppInstaller::CLI::COMDownloadCommand>(RootCommand::CommandName));
         item->AddCommand(std::make_unique<::AppInstaller::CLI::COMInstallCommand>(RootCommand::CommandName));
         return item;

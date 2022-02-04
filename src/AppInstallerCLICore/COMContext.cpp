@@ -68,6 +68,11 @@ namespace AppInstaller::CLI::Execution
         return m_correlationData;
     }
 
+    void COMContext::LogCustom(std::string_view message)
+    {
+        AICLI_LOG(Core, Info, << message);
+    }
+
     void COMContext::SetLoggers()
     {
         Logging::Log().SetLevel(Logging::Level::Info);

@@ -11,6 +11,7 @@
 #include <winget/Manifest.h>
 #include "Commands/COMCommand.h"
 #include <AppInstallerTelemetry.h>
+#include "AppInstallerLogging.h"
 #include <AppInstallerErrors.h>
 #pragma warning( push )
 #pragma warning ( disable : 4467 6388)
@@ -20,6 +21,7 @@
 #include "PackageManager.h"
 #pragma warning( pop )
 #include "PackageManager.g.cpp"
+#include "CatalogPackage.h"
 #include "InstallResult.h"
 #include "PackageCatalogInfo.h"
 #include "PackageCatalogReference.h"
@@ -284,8 +286,9 @@ namespace winrt::Microsoft::Management::Deployment::implementation
     {
         std::unique_ptr<COMContext> context = std::make_unique<COMContext>();
         hstring correlationData = (options) ? options.CorrelationData() : L"";
+        
         context->SetContextLoggers(correlationData, ::AppInstaller::Utility::ConvertToUTF8(callerProcessInfoString));
-
+        
         // Convert the options to arguments for the installer.
         if (options)
         {
@@ -468,13 +471,19 @@ namespace winrt::Microsoft::Management::Deployment::implementation
                 }
                 else if (operationType == PackageOperationType::Uninstall)
                 {
+                    comContext->LogCustom("Reached here");
                     AddInstalledVersionToContext(package.InstalledVersion(), comContext.get());
+                    comContext->LogCustom("Called here");
+
+                    winrt::Microsoft::Management::Deployment::implementation::CatalogPackage* installedVersionInfoImpl = get_self<winrt::Microsoft::Management::Deployment::implementation::CatalogPackage>(package);
+                    std::shared_ptr<::AppInstaller::Repository::IPackage> internalInstalledVersion = installedVersionInfoImpl->GetRepositoryPackage();
+                    comContext->Add<AppInstaller::CLI::Execution::Data::Package>(internalInstalledVersion);
 
                     queueItem = Execution::OrchestratorQueueItemFactory::CreateItemForUninstall(std::wstring{ package.Id() }, std::wstring{ package.InstalledVersion().PackageCatalog().Info().Id() }, std::move(comContext));
                 }
-
+                comContext->LogCustom("Called here 2");
                 Execution::ContextOrchestrator::Instance().EnqueueAndRunItem(queueItem);
-
+                comContext->LogCustom("Called here 3");
                 InstallProgress queuedProgress{ PackageInstallProgressState::Queued, 0, 0, 0 };
                 report_progress(queuedProgress);
             }
@@ -482,6 +491,8 @@ namespace winrt::Microsoft::Management::Deployment::implementation
                 // correlation data is not passed in when retrieving an existing queue item, so get it from the existing context.
                 correlationData = hstring(queueItem->GetContext().GetCorrelationJson());
             }
+
+            AICLI_LOG(Core, Info, << "test here 2");
 
             wil::unique_event progressEvent{ wil::EventOptions::None };
 
@@ -529,6 +540,8 @@ namespace winrt::Microsoft::Management::Deployment::implementation
                     operationEvents /* event array */,
                     FALSE /* bWaitAll, FALSE to wake on any event */,
                     INFINITE /* wait until operation completion */);
+
+                AICLI_LOG(Core, Info, << "test here 3");
 
                 switch (dwEvent)
                 {

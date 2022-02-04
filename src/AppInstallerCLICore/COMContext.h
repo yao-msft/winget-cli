@@ -72,6 +72,8 @@ namespace AppInstaller::CLI::Execution
 
         std::wstring_view GetCorrelationJson();
 
+        void LogCustom(std::string_view message);
+
     private:
         void FireCallbacks(ReportType reportType, uint64_t current, uint64_t maximum, ProgressType progressType, ::AppInstaller::CLI::Workflow::ExecutionStage executionPhase);
 
