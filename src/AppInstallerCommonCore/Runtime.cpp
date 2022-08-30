@@ -96,13 +96,6 @@ namespace AppInstaller::Runtime
         static std::map<PathName, PathDetails> s_Path_TestHook_Overrides;
 #endif
 
-        std::filesystem::path GetKnownFolderPath(const KNOWNFOLDERID& id)
-        {
-            wil::unique_cotaskmem_string knownFolder = nullptr;
-            THROW_IF_FAILED(SHGetKnownFolderPath(id, KF_FLAG_NO_ALIAS | KF_FLAG_DONT_VERIFY | KF_FLAG_NO_PACKAGE_REDIRECTION, NULL, &knownFolder));
-            return knownFolder.get();
-        }
-
         // Gets the user's temp path
         std::filesystem::path GetPathToUserTemp()
         {
@@ -233,6 +226,13 @@ namespace AppInstaller::Runtime
             PSID SID;
             TRUSTEE_TYPE TrusteeType;
         };
+    }
+
+    std::filesystem::path GetKnownFolderPath(const KNOWNFOLDERID& id)
+    {
+        wil::unique_cotaskmem_string knownFolder = nullptr;
+        THROW_IF_FAILED(SHGetKnownFolderPath(id, KF_FLAG_NO_ALIAS | KF_FLAG_DONT_VERIFY | KF_FLAG_NO_PACKAGE_REDIRECTION, NULL, &knownFolder));
+        return knownFolder.get();
     }
 
     bool IsRunningInPackagedContext()
