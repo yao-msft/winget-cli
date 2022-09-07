@@ -2,7 +2,7 @@
 // Licensed under the MIT License.
 #include "pch.h"
 #include "Public/AppInstallerStrings.h"
-#include "winget/Filesystem.h"
+#include "public/winget/Filesystem.h"
 
 namespace AppInstaller::Filesystem
 {
@@ -165,6 +165,31 @@ namespace AppInstaller::Filesystem
             {
                 throw;
             }
+        }
+    }
+
+    std::filesystem::path GetExpandedPath(const std::string& path)
+    {
+        std::string trimPath = path;
+        Utility::Trim(trimPath);
+
+        if (trimPath.empty())
+        {
+            return {};
+        }
+
+        std::wstring widePath = Utility::ConvertToUTF16(trimPath);
+        DWORD count = ExpandEnvironmentStrings(widePath.c_str(), nullptr, 0);
+        std::wstring buffer;
+        buffer.resize(count);
+        if (ExpandEnvironmentStrings(widePath.c_str(), buffer.data(), count) > 0)
+        {
+            buffer.resize(count - 1);
+            return buffer;
+        }
+        else
+        {
+            return trimPath;
         }
     }
 }
