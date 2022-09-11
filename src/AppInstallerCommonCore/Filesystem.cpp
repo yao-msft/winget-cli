@@ -185,7 +185,7 @@ namespace AppInstaller::Filesystem
         if (ExpandEnvironmentStrings(widePath.c_str(), buffer.data(), count) > 0)
         {
             buffer.resize(count - 1);
-            return buffer;
+            return std::filesystem::weakly_canonical(buffer);
         }
         else
         {
