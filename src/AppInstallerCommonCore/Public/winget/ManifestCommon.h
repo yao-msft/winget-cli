@@ -306,6 +306,8 @@ namespace AppInstaller::Manifest
 
     std::string_view ScopeToString(ScopeEnum scope);
 
+    std::string_view InstalledFileTypeToString(InstalledFileTypeEnum installedFileType);
+
     // Gets a value indicating whether the given installer uses the PackageFamilyName system reference.
     bool DoesInstallerTypeUsePackageFamilyName(InstallerTypeEnum installerType);
 
