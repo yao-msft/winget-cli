@@ -260,5 +260,35 @@ namespace IndexCreationTool
         /// <returns>HRESULT.</returns>
         [DllImport(DllName, CallingConvention = CallingConvention.StdCall, CharSet = CharSet.Unicode, PreserveSig = false)]
         private static extern IntPtr WinGetSQLiteIndexPrepareForPackaging(IntPtr index);
+
+        public enum WinGetBeginInstallerMetadataCollectionOptions
+        {
+            WinGetBeginInstallerMetadataCollectionOption_None = 0,
+            // The inputJSON is a local file path, not a JSON string.
+            WinGetBeginInstallerMetadataCollectionOption_InputIsFilePath = 0x1,
+            // The inputJSON is a remote URI, not a JSON string.
+            WinGetBeginInstallerMetadataCollectionOption_InputIsURI = 0x2,
+        };
+
+        [DllImport(DllName, CallingConvention = CallingConvention.StdCall, CharSet = CharSet.Unicode, PreserveSig = false)]
+        public static extern IntPtr WinGetBeginInstallerMetadataCollection(
+            string inputJSON,
+            string logFilePath,
+            WinGetBeginInstallerMetadataCollectionOptions options,
+            out IntPtr collectionHandle);
+
+        // Option flags for WinGetCompleteInstallerMetadataCollection.
+        public enum WinGetCompleteInstallerMetadataCollectionOptions
+        {
+            WinGetCompleteInstallerMetadataCollectionOption_None = 0,
+            // Complete will simply free the collection handle without doing any additional work.
+            WinGetCompleteInstallerMetadataCollectionOption_Abandon = 0x1,
+        };
+
+        [DllImport(DllName, CallingConvention = CallingConvention.StdCall, CharSet = CharSet.Unicode, PreserveSig = false)]
+        public static extern IntPtr WinGetCompleteInstallerMetadataCollection(
+            IntPtr collectionHandle,
+            string outputFilePath,
+            WinGetCompleteInstallerMetadataCollectionOptions options);
     }
 }

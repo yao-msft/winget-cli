@@ -15,7 +15,7 @@ namespace IndexCreationTool
 
         static void Main(string[] args)
         {
-            string rootDir = string.Empty;
+            /*string rootDir = string.Empty;
             string appxManifestPath = string.Empty;
             string certPath = string.Empty;
 
@@ -39,11 +39,43 @@ namespace IndexCreationTool
             {
                 Console.WriteLine("Usage: IndexCreationTool.exe -d <Path to search for yaml> [-m <appxmanifest for index package> [-c <cert for signing index package>]]");
                 return;
+            }*/
+
+            string inputJson = string.Empty;
+            string log = string.Empty;
+            string output = string.Empty;
+
+            for (int i = 0; i < args.Length; i++)
+            {
+                if (args[i] == "-i" && ++i < args.Length)
+                {
+                    inputJson = args[i];
+                }
+                else if (args[i] == "-l" && ++i < args.Length)
+                {
+                    log = args[i];
+                }
+                else if (args[i] == "-o" && ++i < args.Length)
+                {
+                    output = args[i];
+                }
             }
 
             try
             {
-                if (File.Exists(IndexName))
+                string text = System.IO.File.ReadAllText(inputJson);
+
+                IntPtr handle = IntPtr.Zero;
+                WinGetUtilWrapper.WinGetBeginInstallerMetadataCollection(
+                    text, log, WinGetUtilWrapper.WinGetBeginInstallerMetadataCollectionOptions.WinGetBeginInstallerMetadataCollectionOption_None, out handle);
+
+                var wait = Console.Read();
+
+                WinGetUtilWrapper.WinGetCompleteInstallerMetadataCollection(
+                    handle, output, WinGetUtilWrapper.WinGetCompleteInstallerMetadataCollectionOptions.WinGetCompleteInstallerMetadataCollectionOption_None);
+
+                Console.WriteLine("Done");
+                /*if (File.Exists(IndexName))
                 {
                     File.Delete(IndexName);
                 }
@@ -71,7 +103,7 @@ namespace IndexCreationTool
                     {
                         RunCommand("signtool.exe", $"sign /a /fd sha256 /f {certPath} {IndexPackageName}");
                     }
-                }
+                }*/
             }
             catch (Exception e)
             {
