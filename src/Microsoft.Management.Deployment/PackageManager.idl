@@ -713,6 +713,8 @@ namespace Microsoft.Management.Deployment
         Interactive,
     };
 
+    delegate void DownloadCallback(String packageUrl, String downloadPath, UInt8[] expectedHash);
+
     /// Options when installing a package.
     /// Intended to allow full compatibility with the "winget install" command line interface.
     [contract(Microsoft.Management.Deployment.WindowsPackageManagerContract, 1)]
@@ -764,6 +766,8 @@ namespace Microsoft.Management.Deployment
         {
             /// Force the operation to continue upon non security related failures.
             Boolean Force;
+
+            DownloadCallback DownloadCallback;
         }
     }
 

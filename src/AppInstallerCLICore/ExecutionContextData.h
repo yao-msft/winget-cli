@@ -55,10 +55,13 @@ namespace AppInstaller::CLI::Execution
         AllowedArchitectures,
         AllowUnknownScope,
         PortableInstaller,
+        DownloadCallback,
         Max
     };
 
     struct Context;
+
+    typedef std::function<void(std::string url, std::string path, std::vector<std::uint8_t> hash)> DownloadCallBackFunction;
 
     namespace details
     {
@@ -228,6 +231,12 @@ namespace AppInstaller::CLI::Execution
         struct DataMapping<Data::PortableInstaller>
         {
             using value_t = CLI::Portable::PortableInstaller;
+        };
+
+        template <>
+        struct DataMapping<Data::DownloadCallback>
+        {
+            using value_t = DownloadCallBackFunction;
         };
     }
 }

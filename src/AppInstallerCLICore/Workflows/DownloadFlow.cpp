@@ -146,35 +146,65 @@ namespace AppInstaller::CLI::Workflow
         // CheckForExistingInstaller will set the InstallerPath if found
         if (!context.Contains(Execution::Data::InstallerPath))
         {
-            const auto& installer = context.Get<Execution::Data::Installer>().value();
-            switch (installer.BaseInstallerType)
+            if (context.Contains(Execution::Data::DownloadCallback) && context.Get<Execution::Data::DownloadCallback>())
             {
-            case InstallerTypeEnum::Exe:
-            case InstallerTypeEnum::Burn:
-            case InstallerTypeEnum::Inno:
-            case InstallerTypeEnum::Msi:
-            case InstallerTypeEnum::Nullsoft:
-            case InstallerTypeEnum::Portable: 
-            case InstallerTypeEnum::Wix:
-            case InstallerTypeEnum::Zip:
-                context << DownloadInstallerFile;
-                break;
-            case InstallerTypeEnum::Msix:
-                if (installer.SignatureSha256.empty())
+                AICLI_LOG(CLI, Info, << "callback download");
+
+                context << GetInstallerDownloadPath;
+                if (context.IsTerminated())
                 {
+                    return;
+                }
+
+                auto& callback = context.Get<Execution::Data::DownloadCallback>();
+                const auto& installer = context.Get<Execution::Data::Installer>().value();
+                const auto& installerPath = context.Get<Execution::Data::InstallerPath>();
+
+                if (installer.BaseInstallerType == InstallerTypeEnum::MSStore)
+                {
+                    return;
+                }
+
+                callback(installer.Url, installerPath.u8string(), installer.Sha256);
+
+                std::ifstream inStream{ installerPath, std::ifstream::binary };
+                auto existingFileHash = SHA256::ComputeHash(inStream);
+                context.Add<Execution::Data::HashPair>(std::make_pair(installer.Sha256, existingFileHash));
+
+            }
+            else
+            {
+                AICLI_LOG(CLI, Info, << "winget download");
+                const auto& installer = context.Get<Execution::Data::Installer>().value();
+                switch (installer.BaseInstallerType)
+                {
+                case InstallerTypeEnum::Exe:
+                case InstallerTypeEnum::Burn:
+                case InstallerTypeEnum::Inno:
+                case InstallerTypeEnum::Msi:
+                case InstallerTypeEnum::Nullsoft:
+                case InstallerTypeEnum::Portable:
+                case InstallerTypeEnum::Wix:
+                case InstallerTypeEnum::Zip:
                     context << DownloadInstallerFile;
+                    break;
+                case InstallerTypeEnum::Msix:
+                    if (installer.SignatureSha256.empty())
+                    {
+                        context << DownloadInstallerFile;
+                    }
+                    else
+                    {
+                        // Signature hash provided. No download needed. Just verify signature hash.
+                        context << GetMsixSignatureHash;
+                    }
+                    break;
+                case InstallerTypeEnum::MSStore:
+                    // Nothing to do here
+                    return;
+                default:
+                    THROW_HR(HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED));
                 }
-                else
-                {
-                    // Signature hash provided. No download needed. Just verify signature hash.
-                    context << GetMsixSignatureHash;
-                }
-                break;
-            case InstallerTypeEnum::MSStore:
-                // Nothing to do here
-                return;
-            default:
-                THROW_HR(HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED));
             }
         }
 

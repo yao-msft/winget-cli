@@ -121,5 +121,15 @@ namespace winrt::Microsoft::Management::Deployment::implementation
         m_force = value;
     }
 
+    winrt::Microsoft::Management::Deployment::DownloadCallback InstallOptions::DownloadCallback()
+    {
+        return m_downloadCallback;
+    }
+
+    void InstallOptions::DownloadCallback(winrt::Microsoft::Management::Deployment::DownloadCallback const& value)
+    {
+        m_downloadCallback = value;
+    }
+
     CoCreatableMicrosoftManagementDeploymentClass(InstallOptions);
 }

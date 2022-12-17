@@ -18,6 +18,7 @@
 #include <wil\cppwinrt_wrl.h>
 // 4467 Allow use of uuid attribute for com object creation.
 #include "PackageManager.h"
+
 #pragma warning( pop )
 #include "PackageManager.g.cpp"
 #include "CatalogPackage.h"
@@ -31,6 +32,7 @@
 #include "Converters.h"
 #include "Helpers.h"
 #include "ContextOrchestrator.h"
+
 
 using namespace std::literals::chrono_literals;
 using namespace ::AppInstaller::CLI;
@@ -352,6 +354,15 @@ namespace winrt::Microsoft::Management::Deployment::implementation
             if (options.Force())
             {
                 context->Args.AddArg(Execution::Args::Type::Force);
+            }
+            if (options.DownloadCallback())
+            {
+                auto toCopy = options.DownloadCallback();
+                AppInstaller::CLI::Execution::DownloadCallBackFunction func = [=](std::string url, std::string path, std::vector<BYTE> hash)
+                {
+                    toCopy(winrt::to_hstring(url), winrt::to_hstring(path), winrt::array_view<const uint8_t>(hash.data(), static_cast<winrt::array_view<const uint8_t>::size_type>(hash.size())));
+                };
+                context->Add<Execution::Data::DownloadCallback>(func);
             }
 
             // If the PackageInstallScope is anything other than ::Any then set it as a requirement.
