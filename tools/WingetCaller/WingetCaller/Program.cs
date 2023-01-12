@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Runtime.InteropServices;
+using System.Runtime.InteropServices.WindowsRuntime;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -29,18 +30,46 @@ namespace WingetCaller
 
         static DownloadCallback mycb = (url, path, hash) =>
         {
-            using (var client = new WebClient())
+            return AsyncInfo.Run<DownloadResultStatus, DownloadProgress>( async (c, p) =>
             {
-                try
+                using (var client = new WebClient())
                 {
-                    ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
-                    client.DownloadFile(url, path);
+                    try
+                    {
+                        // Fake progress for test purpose
+                        DownloadProgress pp = new DownloadProgress();
+                        pp.BytesDownloaded = 0;
+                        pp.BytesRequired = 100;
+                        p.Report(pp);
+
+                        Thread.Sleep(1000);
+
+                        pp.BytesDownloaded = 10;
+                        p.Report(pp);
+
+                        Thread.Sleep(1000);
+
+                        ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
+                        await client.DownloadFileTaskAsync(url, path);
+
+                        pp.BytesDownloaded = 100;
+                        p.Report(pp);
+                    }
+                    catch (Exception e)
+                    {
+                        var msg = e.Message;
+                    }
                 }
-                catch (Exception e)
+
+                if (c.IsCancellationRequested)
                 {
-                    var msg = e.Message;
+                    return DownloadResultStatus.Ok;
                 }
-            }
+                else
+                {
+                    return DownloadResultStatus.Ok;
+                }
+            } );
         };
 
         static void Main(string[] args)
@@ -102,9 +131,13 @@ namespace WingetCaller
                 var pio = (InstallOptions)Activator.CreateInstance(pioType);
 
                 pio.PackageInstallMode = PackageInstallMode.Default;
+                pio.DownloadCallback = mycb;
+
                 var op = pm.InstallPackageAsync(p, pio);
 
-                pio.DownloadCallback = mycb;
+                op.
+
+               
 
                 Console.WriteLine("Started Install");
 
@@ -112,6 +145,7 @@ namespace WingetCaller
                     && op.Status != Windows.Foundation.AsyncStatus.Error)
                 {
                     Console.WriteLine("Installing...");
+                    
                     Thread.Sleep(1000);
                 }
 

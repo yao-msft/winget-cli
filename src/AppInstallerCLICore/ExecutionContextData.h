@@ -61,7 +61,7 @@ namespace AppInstaller::CLI::Execution
 
     struct Context;
 
-    typedef std::function<void(std::string url, std::string path, std::vector<std::uint8_t> hash)> DownloadCallBackFunction;
+    typedef std::function<int(std::string url, std::string path, std::vector<std::uint8_t> hash, AppInstaller::IProgressCallback& progress)> DownloadCallBackFunction;
 
     namespace details
     {

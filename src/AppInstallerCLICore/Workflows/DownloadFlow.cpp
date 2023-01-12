@@ -13,6 +13,7 @@ namespace AppInstaller::CLI::Workflow
     using namespace AppInstaller::Repository;
     using namespace AppInstaller::Utility;
     using namespace std::string_view_literals;
+    using namespace winrt::Windows::Foundation;
 
     namespace
     {
@@ -165,7 +166,14 @@ namespace AppInstaller::CLI::Workflow
                     return;
                 }
 
-                callback(installer.Url, installerPath.u8string(), installer.Sha256);
+                
+                auto downloadResult = context.Reporter.ExecuteWithProgress(std::bind(callback,
+                    installer.Url,
+                    installerPath.u8string(),
+                    installer.Sha256,
+                    std::placeholders::_1));
+
+                AICLI_LOG(CLI, Info, << "callback download result: " << downloadResult);
 
                 std::ifstream inStream{ installerPath, std::ifstream::binary };
                 auto existingFileHash = SHA256::ComputeHash(inStream);

@@ -65,6 +65,28 @@ namespace Microsoft.Management.Deployment
         }
     };
 
+    /// Status of the Install call
+    /// Implementation Note: Errors mapped from AppInstallerErrors.h
+    [contract(Microsoft.Management.Deployment.WindowsPackageManagerContract, 1)]
+    enum DownloadResultStatus
+    {
+        Ok,
+        BlockedByPolicy,
+        InternalError,
+        DownloadError,
+    };
+
+    [contract(Microsoft.Management.Deployment.WindowsPackageManagerContract, 1)]
+    struct DownloadProgress
+    {
+        UInt64 BytesDownloaded;
+        /// DESIGN NOTE: BytesRequired may only be available for downloads done by Windows Package Manager itself.
+        /// Number of bytes required if known
+        UInt64 BytesRequired;
+        /// Download percentage completed
+        Double DownloadProgressDouble;
+    };
+
     /// Result of the install
     [contract(Microsoft.Management.Deployment.WindowsPackageManagerContract, 1)]
     runtimeclass InstallResult
@@ -713,7 +735,7 @@ namespace Microsoft.Management.Deployment
         Interactive,
     };
 
-    delegate void DownloadCallback(String packageUrl, String downloadPath, UInt8[] expectedHash);
+    delegate Windows.Foundation.IAsyncOperationWithProgress<DownloadResultStatus, DownloadProgress> DownloadCallback(String packageUrl, String downloadPath, UInt8[] expectedHash);
 
     /// Options when installing a package.
     /// Intended to allow full compatibility with the "winget install" command line interface.

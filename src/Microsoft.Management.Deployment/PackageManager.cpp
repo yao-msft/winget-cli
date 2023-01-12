@@ -358,9 +358,32 @@ namespace winrt::Microsoft::Management::Deployment::implementation
             if (options.DownloadCallback())
             {
                 auto toCopy = options.DownloadCallback();
-                AppInstaller::CLI::Execution::DownloadCallBackFunction func = [=](std::string url, std::string path, std::vector<BYTE> hash)
+                AppInstaller::CLI::Execution::DownloadCallBackFunction func = [=](std::string url, std::string path, std::vector<BYTE> hash, ::AppInstaller::IProgressCallback& progress) -> int
                 {
-                    toCopy(winrt::to_hstring(url), winrt::to_hstring(path), winrt::array_view<const uint8_t>(hash.data(), static_cast<winrt::array_view<const uint8_t>::size_type>(hash.size())));
+                    auto operation = toCopy(winrt::to_hstring(url), winrt::to_hstring(path), winrt::array_view<const uint8_t>(hash.data(), static_cast<winrt::array_view<const uint8_t>::size_type>(hash.size())));
+
+                    winrt::Windows::Foundation::AsyncOperationProgressHandler<winrt::Microsoft::Management::Deployment::DownloadResultStatus, winrt::Microsoft::Management::Deployment::DownloadProgress> progressCallback(
+                        [&](const winrt::Windows::Foundation::IAsyncOperationWithProgress<winrt::Microsoft::Management::Deployment::DownloadResultStatus, winrt::Microsoft::Management::Deployment::DownloadProgress>&, winrt::Microsoft::Management::Deployment::DownloadProgress dprogress)
+                        {
+                            if (dprogress.BytesRequired!= 0)
+                            {
+                                progress.OnProgress(dprogress.BytesDownloaded, dprogress.BytesRequired, ::AppInstaller::ProgressType::Bytes);
+                            }
+                            else
+                            {
+                                progress.OnProgress(static_cast<int>(dprogress.DownloadProgressDouble), 100, ::AppInstaller::ProgressType::Percent);
+                            }
+                        }
+                    );
+
+                    // Set progress callback.
+                    operation.Progress(progressCallback);
+
+                    auto removeCancel = progress.SetCancellationFunction([&]() { operation.Cancel(); });
+
+                    auto deployResult = operation.get();
+
+                    return static_cast<int>(deployResult);
                 };
                 context->Add<Execution::Data::DownloadCallback>(func);
             }
