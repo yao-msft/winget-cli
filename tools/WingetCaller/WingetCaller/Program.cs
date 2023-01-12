@@ -30,49 +30,56 @@ namespace WingetCaller
 
         static DownloadCallback mycb = (url, path, hash) =>
         {
-            return AsyncInfo.Run<DownloadResultStatus, DownloadProgress>( async (c, p) =>
-            {
-                using (var client = new WebClient())
+            return AsyncInfo.Run<DownloadResultStatus, DownloadProgress>((c, p) =>
+                Task.Run<DownloadResultStatus>(() =>
                 {
-                    try
+                    using (var client = new WebClient())
                     {
-                        // Fake progress for test purpose
-                        DownloadProgress pp = new DownloadProgress();
-                        pp.BytesDownloaded = 0;
-                        pp.BytesRequired = 100;
-                        p.Report(pp);
+                        try
+                        {
+                            // Fake progress for test purpose
+                            DownloadProgress pp = new DownloadProgress();
+                            pp.BytesDownloaded = 0;
+                            pp.BytesRequired = 100;
+                            p.Report(pp);
 
-                        Thread.Sleep(1000);
+                            Thread.Sleep(1000);
 
-                        pp.BytesDownloaded = 10;
-                        p.Report(pp);
+                            pp.BytesDownloaded = 10;
+                            p.Report(pp);
 
-                        Thread.Sleep(1000);
+                            Thread.Sleep(1000);
 
-                        ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
-                        await client.DownloadFileTaskAsync(url, path);
+                            ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
+                            client.DownloadFile(url, path);
 
-                        pp.BytesDownloaded = 100;
-                        p.Report(pp);
+                            pp.BytesDownloaded = 70;
+                            p.Report(pp);
+
+                            Thread.Sleep(1000);
+
+                            pp.BytesDownloaded = 100;
+                            p.Report(pp);
+                        }
+                        catch (Exception e)
+                        {
+                            var msg = e.Message;
+                        }
                     }
-                    catch (Exception e)
+
+                    if (c.IsCancellationRequested)
                     {
-                        var msg = e.Message;
+                        return DownloadResultStatus.Ok;
                     }
-                }
-
-                if (c.IsCancellationRequested)
-                {
-                    return DownloadResultStatus.Ok;
-                }
-                else
-                {
-                    return DownloadResultStatus.Ok;
-                }
-            } );
+                    else
+                    {
+                        return DownloadResultStatus.Ok;
+                    }
+                })
+            );
         };
 
-        static void Main(string[] args)
+        static async Task Main(string[] args)
         {
             // initialize PackageManagerSettings
             var pmsGuid = Guid.Parse("80CF9D63-5505-4342-B9B4-BB87895CA8BB");
@@ -133,32 +140,17 @@ namespace WingetCaller
                 pio.PackageInstallMode = PackageInstallMode.Default;
                 pio.DownloadCallback = mycb;
 
-                var op = pm.InstallPackageAsync(p, pio);
-
-                op.
-
-               
-
                 Console.WriteLine("Started Install");
 
-                while (op.Status != Windows.Foundation.AsyncStatus.Completed
-                    && op.Status != Windows.Foundation.AsyncStatus.Error)
-                {
-                    Console.WriteLine("Installing...");
-                    
-                    Thread.Sleep(1000);
-                }
+                var op = pm.InstallPackageAsync(p, pio);
 
-                if (op.Status == Windows.Foundation.AsyncStatus.Completed)
+                op.Progress = (installResult, progress) => Console.WriteLine("Installing..." + progress.BytesDownloaded + " " + progress.BytesRequired);
+
+                var result = await op;
+
+                if (result.Status == InstallResultStatus.Ok)
                 {
-                    if (op.GetResults().Status == InstallResultStatus.Ok)
-                    {
-                        Console.WriteLine("Success");
-                    }
-                    else
-                    {
-                        Console.WriteLine("Fail");
-                    }
+                    Console.WriteLine("Success");
                 }
                 else
                 {
