@@ -55,6 +55,44 @@ namespace AppInstaller::CLI
         };
     }
 
+    HWND GetConsoleHwnd(void)
+    {
+#define MY_BUFSIZE 1024 // Buffer size for console window titles.
+        HWND hwndFound;         // This is what is returned to the caller.
+        wchar_t pszNewWindowTitle[MY_BUFSIZE]; // Contains fabricated
+        // WindowTitle.
+        wchar_t pszOldWindowTitle[MY_BUFSIZE]; // Contains original
+        // WindowTitle.
+
+// Fetch current window title.
+
+        GetConsoleTitle(pszOldWindowTitle, MY_BUFSIZE);
+
+        // Format a "unique" NewWindowTitle.
+
+        wsprintf(pszNewWindowTitle, L"%d/%d",
+            (int)GetTickCount64(),
+            GetCurrentProcessId());
+
+        // Change current window title.
+
+        SetConsoleTitle(pszNewWindowTitle);
+
+        // Ensure window title has been updated.
+
+        Sleep(40);
+
+        // Look for NewWindowTitle.
+
+        hwndFound = FindWindow(NULL, pszNewWindowTitle);
+
+        // Restore original window title.
+
+        SetConsoleTitle(pszOldWindowTitle);
+
+        return(hwndFound);
+    }
+
     static LRESULT __stdcall WndProc(HWND const window, UINT const message, WPARAM const wparam, LPARAM const lparam) noexcept
     {
         WINRT_ASSERT(window);
@@ -144,7 +182,7 @@ namespace AppInstaller::CLI
 
                 WebTokenRequest req(provider, L"", L"edb7e0dc-a3bf-4b99-a0aa-6cad61ed1b5e");
 
-                req.Properties().Insert(L"resource", L"https://graph.microsoft.com");
+                req.Properties().Insert(L"resource", L"https://onestore.microsoft.com");
 
                 winrt::Windows::Foundation::IAsyncOperation<WebTokenRequestResult> requestOperation;
 
@@ -153,7 +191,7 @@ namespace AppInstaller::CLI
                 auto managerFactory = winrt::get_activation_factory<WebAuthenticationCoreManager>();
                 winrt::com_ptr<IWebAuthenticationCoreManagerInterop> managerInterop{ managerFactory.as<IWebAuthenticationCoreManagerInterop>() };
 
-                auto hr = managerInterop->RequestTokenForWindowAsync(hwnd, req.as<::IInspectable>().get(), iidAsyncRequestResult, reinterpret_cast<void**>(&requestOperation));
+                auto hr = managerInterop->RequestTokenForWindowAsync(GetForegroundWindow(), req.as<::IInspectable>().get(), iidAsyncRequestResult, reinterpret_cast<void**>(&requestOperation));
 
                 if (SUCCEEDED(hr))
                 {
