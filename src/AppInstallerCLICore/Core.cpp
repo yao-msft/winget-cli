@@ -9,13 +9,20 @@
 #include "Commands/InstallCommand.h"
 #include "COMContext.h"
 #include <AppInstallerFileLogger.h>
+#include <wil/result_macros.h>
+#include <inspectable.h>
+#include <wrl/wrappers/corewrappers.h>
+#include "AuthProto.h"
 
 #ifndef AICLI_DISABLE_TEST_HOOKS
 #include <winget/Debugging.h>
 #endif
+#include <windows.ui.core.h>
 
 using namespace winrt;
 using namespace winrt::Windows::Foundation;
+using namespace winrt::Windows::Security::Authentication::Web::Core;
+using namespace winrt::Windows::Security::Credentials;
 using namespace AppInstaller::CLI;
 using namespace AppInstaller::Utility::literals;
 
@@ -48,7 +55,16 @@ namespace AppInstaller::CLI
         };
     }
 
-    int CoreMain(int argc, wchar_t const** argv) try
+    static LRESULT __stdcall WndProc(HWND const window, UINT const message, WPARAM const wparam, LPARAM const lparam) noexcept
+    {
+        WINRT_ASSERT(window);
+
+        
+
+        return DefWindowProc(window, message, wparam, lparam);
+    }
+
+    int CoreMain(int, wchar_t const**)
     {
         init_apartment();
 
@@ -74,6 +90,8 @@ namespace AppInstaller::CLI
         // Set output to UTF8
         ConsoleOutputCPRestore utf8CP(CP_UTF8);
 
+        
+
         Logging::Telemetry().SetCaller("winget-cli");
         Logging::Telemetry().LogStartup();
 
@@ -82,7 +100,89 @@ namespace AppInstaller::CLI
 
         context << Workflow::ReportExecutionStage(Workflow::ExecutionStage::ParseArgs);
 
-        // Convert incoming wide char args to UTF8
+
+   //     std::thread waitThread([&]
+   //         {
+                const wchar_t CLASS_NAME[] = L"Sample Window Class";
+
+                HMODULE resourceModule = nullptr;
+                GetModuleHandleExW(
+                    GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS | GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
+                    reinterpret_cast<PCWSTR>(CoreMain),
+                    &resourceModule);
+                THROW_LAST_ERROR_IF_NULL(resourceModule);
+
+                WNDCLASS wc = { };
+
+                wc.lpfnWndProc = WndProc;
+                wc.hInstance = resourceModule;
+                wc.lpszClassName = CLASS_NAME;
+
+                RegisterClass(&wc);
+
+                HWND hwnd = CreateWindowEx(
+                    0,                              // Optional window styles.
+                    CLASS_NAME,                     // Window class
+                    L"Learn to Program Windows",    // Window text
+                    WS_OVERLAPPEDWINDOW,            // Window style
+
+                    // Size and position
+                    CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
+
+                    NULL,       // Parent window    
+                    NULL,       // Menu
+                    resourceModule,  // Instance handle
+                    NULL        // Additional application data
+                );
+
+                if (hwnd == NULL)
+                {
+                    return 0;
+                }
+
+               auto provider = WebAuthenticationCoreManager::FindAccountProviderAsync(L"https://login.microsoft.com", L"organizations").get();
+
+                WebTokenRequest req(provider, L"", L"edb7e0dc-a3bf-4b99-a0aa-6cad61ed1b5e");
+
+                req.Properties().Insert(L"resource", L"https://graph.microsoft.com");
+
+                winrt::Windows::Foundation::IAsyncOperation<WebTokenRequestResult> requestOperation;
+
+                constexpr winrt::guid iidAsyncRequestResult{ winrt::guid_of<IAsyncOperation<WebTokenRequestResult>>() };
+
+                auto managerFactory = winrt::get_activation_factory<WebAuthenticationCoreManager>();
+                winrt::com_ptr<IWebAuthenticationCoreManagerInterop> managerInterop{ managerFactory.as<IWebAuthenticationCoreManagerInterop>() };
+
+                auto hr = managerInterop->RequestTokenForWindowAsync(hwnd, req.as<::IInspectable>().get(), iidAsyncRequestResult, reinterpret_cast<void**>(&requestOperation));
+
+                if (SUCCEEDED(hr))
+                {
+                    auto result = requestOperation.get();
+                    if (result.ResponseStatus() != WebTokenRequestStatus::Success)
+                    {
+                        std::cout << result.ResponseError().ErrorCode() << std::endl;
+                        std::wcout << result.ResponseError().ErrorMessage().c_str();
+                        return -1;
+                    }
+                    else
+                    {
+                        std::wcout << result.ResponseData().GetAt(0).Token().c_str();
+                    }
+                }
+
+               // TryAuthProto();
+
+
+              //  RuntimeClass_Windows_UI_Core_CoreWindow
+
+//                return 0;
+  //          });
+        
+ //       waitThread.join();
+
+        return 0;
+
+        /*// Convert incoming wide char args to UTF8
         std::vector<std::string> utf8Args;
         for (int i = 1; i < argc; ++i)
         {
@@ -90,12 +190,12 @@ namespace AppInstaller::CLI
         }
 
         AICLI_LOG(CLI, Info, << "WinGet invoked with arguments:" << [&]() {
-                std::stringstream strstr;
-                for (const auto& arg : utf8Args)
-                {
-                    strstr << " '" << arg << '\'';
-                }
-                return strstr.str();
+            std::stringstream strstr;
+            for (const auto& arg : utf8Args)
+            {
+                strstr << " '" << arg << '\'';
+            }
+            return strstr.str();
             }());
 
         Invocation invocation{ std::move(utf8Args) };
@@ -142,12 +242,9 @@ namespace AppInstaller::CLI
         }
 
         return Execute(context, command);
-    }
-    // End of the line exceptions that are not ever expected.
-    // Telemetry cannot be reliable beyond this point, so don't let these happen.
-    catch (...)
-    {
-        return APPINSTALLER_CLI_ERROR_INTERNAL_ERROR;
+
+        // End of the line exceptions that are not ever expected.
+        // Telemetry cannot be reliable beyond this point, so don't let these happen.*/
     }
 
     void ServerInitialize()

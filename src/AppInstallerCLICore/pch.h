@@ -40,6 +40,8 @@
 #include <winrt/Windows.ApplicationModel.Store.Preview.InstallControl.h>
 #include <winrt/Windows.Storage.Streams.h>
 #include <winrt/Windows.Security.Cryptography.Certificates.h>
+#include <winrt/Windows.Security.Authentication.Web.Core.h>
+#include <winrt/Windows.UI.ApplicationSettings.h>
 
 #pragma warning( push )
 #pragma warning ( disable : 6001 6285 6340 6388 )
@@ -51,3 +53,4 @@
 
 #include <wrl/client.h>
 #include <AppxPackaging.h>
+#include <Webauthenticationcoremanagerinterop.h>

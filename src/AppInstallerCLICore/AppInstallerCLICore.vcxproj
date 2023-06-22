@@ -337,6 +337,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="Argument.h" />
+    <ClInclude Include="AuthProto.h" />
     <ClInclude Include="ChannelStreams.h" />
     <ClInclude Include="Command.h" />
     <ClInclude Include="Commands\COMCommand.h" />
@@ -404,6 +405,7 @@
     <ClInclude Include="Workflows\WorkflowBase.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="AuthProto.cpp" />
     <ClCompile Include="COMContext.cpp" />
     <ClCompile Include="Commands\COMCommand.cpp" />
     <ClCompile Include="Commands\ConfigureCommand.cpp" />
