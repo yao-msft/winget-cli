@@ -513,6 +513,9 @@
     <ProjectReference Include="..\AppInstallerSharedLib\AppInstallerSharedLib.vcxproj">
       <Project>{f3f6e699-bc5d-4950-8a05-e49dd9eb0d51}</Project>
     </ProjectReference>
+    <ProjectReference Include="..\SfsClient\SfsClient.vcxproj">
+      <Project>{1b9077b3-8923-4ecd-8fc9-b3190fcbe4d4}</Project>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
