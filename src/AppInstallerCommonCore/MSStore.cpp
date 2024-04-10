@@ -6,6 +6,10 @@
 #include <winget/Runtime.h>
 #include <AppInstallerFileLogger.h>
 #include <AppInstallerErrors.h>
+#include <winget/Authentication.h>
+#ifndef WINGET_DISABLE_FOR_FUZZING
+#include <sfsclient/SFSClient.h>
+#endif
 
 namespace AppInstaller::MSStore
 {
@@ -251,5 +255,61 @@ namespace AppInstaller::MSStore
         }
 
         return errorCode;
+    }
+
+    void LoggingCallback(const SFS::LogData& logData)
+    {
+        std::cout << "Log: " << " [" << ToString(logData.severity)
+            << "]" << " " << std::filesystem::path(logData.file).filename().string() << ":" << logData.line << " "
+            << logData.message << std::endl;
+    }
+
+    void GetMSStorePackageDownloadInfo()
+    {
+#ifndef WINGET_DISABLE_FOR_FUZZING
+
+        SFS::ClientConfig config;
+        config.accountId = "storeapps";
+        config.instanceId = "storeapps";
+        config.logCallbackFn = LoggingCallback;
+
+        std::unique_ptr<SFS::SFSClient> sfsClient;
+        auto result = SFS::SFSClient::Make(config, sfsClient);
+        if (!result)
+        {
+            return;
+        }
+
+        SFS::RequestParams params;
+        params.productRequests = { {"f855810c-9f77-45ff-a0f5-cd0feaa945c6", {}} };
+
+        std::vector<SFS::AppContent> appContents;
+        auto result2 = sfsClient->GetLatestAppDownloadInfo(params, appContents);
+        if (!result2)
+        {
+            return;
+        }
+        /**
+        Authentication::MicrosoftEntraIdAuthenticationInfo aadAuthInfo;
+        aadAuthInfo.Resource = "c5e1cb0d-5d24-4b1a-b291-ec684152b2ba";
+        //aadAuthInfo.Resource = "edb7e0dc-a3bf-4b99-a0aa-6cad61ed1b5e";
+
+        Authentication::AuthenticationInfo authInfo;
+        authInfo.Type = Authentication::AuthenticationType::MicrosoftEntraId;
+        authInfo.MicrosoftEntraIdInfo = std::move(aadAuthInfo);
+
+        Authentication::AuthenticationArguments authArgs;
+        authArgs.Mode = Authentication::AuthenticationMode::Interactive;
+
+        Authentication::Authenticator m_authenticator(authInfo, authArgs);
+
+        auto authResult = m_authenticator.AuthenticateForToken();
+
+        std::cout << std::endl;
+
+        std::cout << authResult.Token << std::endl;
+        **/
+
+#endif
     }
 }

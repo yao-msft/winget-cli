@@ -29,5 +29,10 @@
       "version": "3.11.3"
     }
   ],
+  "vcpkg-configuration": {
+    "overlay-triplets": [
+      "./VcpkgCustomTriplets"
+    ]
+  },
   "builtin-baseline": "f56238700757aa05975e41fa835739c632810f3f"
 }

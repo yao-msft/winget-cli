@@ -47,4 +47,7 @@ namespace AppInstaller::MSStore
         bool m_isSilentMode;
         bool m_force;
     };
+
+    void GetMSStorePackageDownloadInfo();
+    // void GetMSStorePackageLicense();
 }

@@ -16,6 +16,9 @@
     <Filter Include="src\details\connection">
       <UniqueIdentifier>{133cf863-8baa-4ce2-9050-40155b027f04}</UniqueIdentifier>
     </Filter>
+    <Filter Include="src\details\connection\mock">
+      <UniqueIdentifier>{93204abc-3d4c-4cf0-9433-db8c4ad667b5}</UniqueIdentifier>
+    </Filter>
     <Filter Include="src\details\entity">
       <UniqueIdentifier>{102d246a-6b50-4171-a909-cb68923ac321}</UniqueIdentifier>
     </Filter>
@@ -110,6 +113,9 @@
     <ClCompile Include="sfs-client\client\src\details\SFSUrlBuilder.cpp">
       <Filter>src\details</Filter>
     </ClCompile>
+    <ClCompile Include="sfs-client\client\src\details\TestOverride.cpp">
+      <Filter>src\details</Filter>
+    </ClCompile>
     <ClCompile Include="sfs-client\client\src\details\UrlBuilder.cpp">
       <Filter>src\details</Filter>
     </ClCompile>
@@ -133,6 +139,12 @@
     </ClCompile>
     <ClCompile Include="sfs-client\client\src\details\connection\HttpHeader.cpp">
       <Filter>src\details\connection</Filter>
+    </ClCompile>
+    <ClCompile Include="sfs-client\client\src\details\connection\mock\MockConnection.cpp">
+      <Filter>src\details\connection\mock</Filter>
+    </ClCompile>
+    <ClCompile Include="sfs-client\client\src\details\connection\mock\MockConnectionManager.cpp">
+      <Filter>src\details\connection\mock</Filter>
     </ClCompile>
     <ClCompile Include="sfs-client\client\src\details\entity\ContentType.cpp">
       <Filter>src\details\entity</Filter>
