@@ -10,6 +10,7 @@
 #include <winget/GroupPolicy.h>
 #include <winget/ManifestYamlWriter.h>
 #include <winget/NetworkSettings.h>
+#include <winget/MSStore.h>
 
 namespace AppInstaller::CLI::Workflow
 {
@@ -232,13 +233,14 @@ namespace AppInstaller::CLI::Workflow
             case InstallerTypeEnum::MSStore:
                 if (installerDownloadOnly)
                 {
-                    THROW_HR(HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED));
+                    AppInstaller::MSStore::GetMSStorePackageDownloadInfo();
+                    context << ExportManifest;
                 }
                 else
                 {
                     // Nothing to do here
-                    return;
                 }
+                return;
             default:
                 THROW_HR(HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED));
             }

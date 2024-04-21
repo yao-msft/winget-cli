@@ -7,7 +7,6 @@
 #include "Workflows/PromptFlow.h"
 #include "Resources.h"
 #include <AppInstallerRuntime.h>
-#include <winget/MSStore.h>
 
 namespace AppInstaller::CLI
 {
@@ -65,8 +64,6 @@ namespace AppInstaller::CLI
     void DownloadCommand::ExecuteInternal(Context& context) const
     {
         context.SetFlags(AppInstaller::CLI::Execution::ContextFlag::InstallerDownloadOnly);
-
-        AppInstaller::MSStore::GetMSStorePackageDownloadInfo();
 
         if (context.Args.Contains(Execution::Args::Type::Manifest))
         {

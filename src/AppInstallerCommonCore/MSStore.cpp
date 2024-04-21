@@ -281,7 +281,7 @@ namespace AppInstaller::MSStore
         }
 
         SFS::RequestParams params;
-        params.productRequests = { {"f855810c-9f77-45ff-a0f5-cd0feaa945c6", {}} };
+        params.productRequests = { {"f72b49cb-ed6c-4ebf-96fd-67c846dcafd5", {}} };
 
         std::vector<SFS::AppContent> appContents;
         auto result2 = sfsClient->GetLatestAppDownloadInfo(params, appContents);
