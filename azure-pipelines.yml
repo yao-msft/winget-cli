@@ -97,6 +97,13 @@ jobs:
       arguments: '-TargetFile binver\binver\version.h -BuildVersion $(BuildVer)'
       workingDirectory: 'src'
 
+  - task: CmdLine@2
+    displayName: Enable Vcpkg Install
+    inputs:
+      script: |
+        $(VCPKG_INSTALLATION_ROOT)\vcpkg.exe integrate install
+      workingDirectory: '$(VCPKG_INSTALLATION_ROOT)'
+
   # Build all solutions in the root directory.
   - task: VSBuild@1
     displayName: Build Solution
