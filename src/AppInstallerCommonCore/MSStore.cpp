@@ -257,12 +257,14 @@ namespace AppInstaller::MSStore
         return errorCode;
     }
 
+#ifndef WINGET_DISABLE_FOR_FUZZING
     void LoggingCallback(const SFS::LogData& logData)
     {
         std::cout << "Log: " << " [" << ToString(logData.severity)
             << "]" << " " << std::filesystem::path(logData.file).filename().string() << ":" << logData.line << " "
             << logData.message << std::endl;
     }
+#endif
 
     void GetMSStorePackageDownloadInfo()
     {
