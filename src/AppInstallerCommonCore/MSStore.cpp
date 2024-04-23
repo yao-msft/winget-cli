@@ -291,9 +291,9 @@ namespace AppInstaller::MSStore
         {
             return;
         }
-        /**
+        
         Authentication::MicrosoftEntraIdAuthenticationInfo aadAuthInfo;
-        aadAuthInfo.Resource = "c5e1cb0d-5d24-4b1a-b291-ec684152b2ba";
+        aadAuthInfo.Resource = "https://bigcatalog.commerce.microsoft.com/";
         //aadAuthInfo.Resource = "edb7e0dc-a3bf-4b99-a0aa-6cad61ed1b5e";
 
         Authentication::AuthenticationInfo authInfo;
@@ -301,16 +301,35 @@ namespace AppInstaller::MSStore
         authInfo.MicrosoftEntraIdInfo = std::move(aadAuthInfo);
 
         Authentication::AuthenticationArguments authArgs;
-        authArgs.Mode = Authentication::AuthenticationMode::Interactive;
+        authArgs.Mode = Authentication::AuthenticationMode::SilentPreferred;
+        authArgs.AuthenticationAccount = "TestAccount2@SigntoolTest.onmicrosoft.com";
 
         Authentication::Authenticator m_authenticator(authInfo, authArgs);
 
         auto authResult = m_authenticator.AuthenticateForToken();
 
+        Authentication::MicrosoftEntraIdAuthenticationInfo aadAuthInfo2;
+        //aadAuthInfo.Resource = "c5e1cb0d-5d24-4b1a-b291-ec684152b2ba";
+        aadAuthInfo2.Resource = "edb7e0dc-a3bf-4b99-a0aa-6cad61ed1b5e";
+
+        Authentication::AuthenticationInfo authInfo2;
+        authInfo2.Type = Authentication::AuthenticationType::MicrosoftEntraId;
+        authInfo2.MicrosoftEntraIdInfo = std::move(aadAuthInfo2);
+
+        Authentication::AuthenticationArguments authArgs2;
+        authArgs2.Mode = Authentication::AuthenticationMode::SilentPreferred;
+        authArgs2.AuthenticationAccount = "TestAccount2@SigntoolTest.onmicrosoft.com";
+
+        Authentication::Authenticator m_authenticator2(authInfo2, authArgs2);
+
+        auto authResult2 = m_authenticator2.AuthenticateForToken();
+
         std::cout << std::endl;
 
         std::cout << authResult.Token << std::endl;
-        **/
+
+        std::cout << authResult2.Token << std::endl;
+     
 
 #endif
     }
